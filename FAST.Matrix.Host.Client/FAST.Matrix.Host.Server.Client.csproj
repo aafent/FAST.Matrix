@@ -12,4 +12,9 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.27" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Contracts only — WASM-compatible. Engine (server-side) is NOT referenced here. -->
+    <ProjectReference Include="..\FAST.Matrix.Contracts\FAST.Matrix.Contracts.csproj" />
+  </ItemGroup>
+
 </Project>

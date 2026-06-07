@@ -1,0 +1,38 @@
+@using FAST.Matrix.Contracts.UI
+@namespace FAST.Matrix.Host.Server.Client
+
+<li class="fast-tree-node">
+    <a class="fast-tree-link @(Node.IsSelected ? "active" : "") @(Node.IsExpanded ? "expanded" : "")"
+       @onclick="HandleClick"
+       @onclick:preventDefault="true"
+       @onclick:stopPropagation="true">
+        <i class="fast-tree-icon @Node.IconClass"></i>
+        <span>@Node.Text</span>
+        @if (Node.Children.Count > 0)
+        {
+            <i class="fas fa-angle-right fast-tree-toggle"></i>
+        }
+    </a>
+
+    @if (Node.Children.Count > 0 && Node.IsExpanded)
+    {
+        <ul class="fast-tree-children">
+            @foreach (var child in Node.Children)
+            {
+                <WasmTreeViewRenderer Node="child" OnNodeClick="OnNodeClick" />
+            }
+        </ul>
+    }
+</li>
+
+@code {
+    [Parameter, EditorRequired] public TreeViewNode Node { get; set; } = default!;
+    [Parameter, EditorRequired] public EventCallback<TreeViewNode> OnNodeClick { get; set; }
+
+    private async Task HandleClick()
+    {
+        if (Node.Children.Count > 0)
+            Node.IsExpanded = !Node.IsExpanded;
+        await OnNodeClick.InvokeAsync(Node);
+    }
+}

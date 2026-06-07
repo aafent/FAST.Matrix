@@ -49,6 +49,12 @@ public static class MatrixServiceExtensions
         services.AddScoped<ShellAppletContext>();
         services.AddScoped<IShellAppletContext>(sp => sp.GetRequiredService<ShellAppletContext>());
 
+        // ── Overlay Orchestrator ──────────────────────────────────────────────
+
+        services.AddScoped<FAST.Matrix.Engine.Overlay.FastOverlayOrchestrator>();
+        services.AddScoped<IFastOverlayOrchestrator>(
+            sp => sp.GetRequiredService<FAST.Matrix.Engine.Overlay.FastOverlayOrchestrator>());
+
         // ── Navigation Guard ──────────────────────────────────────────────────
 
         services.AddScoped<NavigationGuardService>();

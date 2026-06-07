@@ -1,0 +1,59 @@
+@using FAST.Matrix.Contracts.Overlay
+@using FAST.Matrix.Host.Server.Client.Services
+@namespace FAST.Matrix.Host.Server.Client
+@inject IFastOverlayOrchestrator Orchestrator
+@implements IDisposable
+
+@if (Orchestrator.IsOverlayActive)
+{
+    <div class="fast-overlay-backdrop" @onclick="Dismiss"></div>
+    <div class="fast-overlay-panel @_sizeClass">
+        <div class="fast-overlay-header">
+            <h5>@_title</h5>
+            <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="Dismiss">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="fast-overlay-body">
+            @if (_content is not null)
+            {
+                @_content
+            }
+            else
+            {
+                <div class="fast-loading">
+                    <div class="spinner-border text-primary" role="status"></div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private string _title = string.Empty;
+    private string _sizeClass = "half";
+    private Microsoft.AspNetCore.Components.RenderFragment? _content;
+
+    protected override void OnInitialized() =>
+        Orchestrator.OnOverlayStateChanged += HandleStateChanged;
+
+    private void HandleStateChanged()
+    {
+        if (Orchestrator is WasmOverlayOrchestrator o)
+        {
+            _title     = o.CurrentTitle;
+            _sizeClass = o.CurrentSizeClass;
+            _content   = o.CurrentContent;
+        }
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void Dismiss()
+    {
+        if (Orchestrator is WasmOverlayOrchestrator o)
+            o.DismissWithCancel();
+    }
+
+    public void Dispose() =>
+        Orchestrator.OnOverlayStateChanged -= HandleStateChanged;
+}

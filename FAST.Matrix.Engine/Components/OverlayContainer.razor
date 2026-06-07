@@ -1,0 +1,74 @@
+@using FAST.Matrix.Contracts.Overlay
+@namespace FAST.Matrix.Engine.Components
+@inject IFastOverlayOrchestrator OverlayOrchestrator
+@implements IDisposable
+
+@* Renders the overlay backdrop and slide-out panel when an overlay is active.
+   Mounted once inside MainLayout — always present, invisible when inactive. *@
+
+@if (OverlayOrchestrator.IsOverlayActive)
+{
+    <div class="fast-overlay-backdrop" @onclick="HandleBackdropClick"></div>
+
+    <div class="fast-overlay-panel @_panelSizeClass">
+        <div class="fast-overlay-header">
+            <h5>@_panelTitle</h5>
+            <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="HandleCloseClick">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="fast-overlay-body">
+            @if (_panelContent is not null)
+            {
+                @_panelContent
+            }
+            else
+            {
+                <div class="fast-loading">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <span>Loading...</span>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private string _panelSizeClass = "half";
+    private string _panelTitle = string.Empty;
+    private RenderFragment? _panelContent;
+
+    protected override void OnInitialized()
+    {
+        OverlayOrchestrator.OnOverlayStateChanged += HandleOverlayStateChanged;
+    }
+
+    private void HandleOverlayStateChanged()
+    {
+        // Sync panel metadata from the orchestrator when state changes
+        if (OverlayOrchestrator is Engine.Overlay.FastOverlayOrchestrator concrete)
+        {
+            _panelTitle      = concrete.CurrentTitle;
+            _panelSizeClass  = concrete.CurrentSizeClass;
+            _panelContent    = concrete.CurrentContent;
+        }
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleBackdropClick()
+    {
+        if (OverlayOrchestrator is Engine.Overlay.FastOverlayOrchestrator concrete)
+            concrete.DismissWithCancel();
+    }
+
+    private void HandleCloseClick()
+    {
+        if (OverlayOrchestrator is Engine.Overlay.FastOverlayOrchestrator concrete)
+            concrete.DismissWithCancel();
+    }
+
+    public void Dispose()
+    {
+        OverlayOrchestrator.OnOverlayStateChanged -= HandleOverlayStateChanged;
+    }
+}

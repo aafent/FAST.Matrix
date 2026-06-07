@@ -1,23 +1,174 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
+@using FAST.Matrix.Contracts.UI
+@using FAST.Matrix.Host.Server.Client.Services
+@inject IShellUiContext UiContext
+@inject IShellAppletContext AppletContext
+@inject NavigationManager NavManager
+@inject IJSRuntime JS
+@implements IDisposable
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
+<NavigationLock OnBeforeInternalNavigation="HandleNavigationAsync" />
+
+<div class="wrapper">
+
+    @* ═══ TOP NAVBAR ════════════════════════════════════════════ *@
+    <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+        <ul class="navbar-nav">
+            <li class="nav-item">
+                <a class="nav-link" data-widget="pushmenu" href="#" role="button">
+                    <i class="fas fa-bars"></i>
+                </a>
+            </li>
+            <li class="nav-item d-none d-sm-inline-block">
+                <a href="/" class="nav-link">Home</a>
+            </li>
+        </ul>
+
+        @if (UiContext.TopToolbar is not null)
+        {
+            <ul class="navbar-nav ml-3">
+                <li class="nav-item">
+                    <div class="fast-toolbar-zone">
+                        @UiContext.TopToolbar
+                    </div>
+                </li>
+            </ul>
+        }
+
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+                <a class="nav-link" data-widget="fullscreen" href="#" role="button">
+                    <i class="fas fa-expand-arrows-alt"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    @* ═══ LEFT SIDEBAR ═══════════════════════════════════════════ *@
+    <aside class="main-sidebar sidebar-dark-primary elevation-4">
+        <a href="/" class="brand-link">
+            <span class="brand-image-placeholder d-flex align-items-center justify-content-center"
+                  style="width:33px;height:33px;background:rgba(255,255,255,0.2);border-radius:4px;margin-left:0.8rem;">
+                <i class="fas fa-th-large text-white"></i>
+            </span>
+            <span class="brand-text font-weight-bold ml-2">FAST.Matrix</span>
+        </a>
+
+        <div class="sidebar">
+            <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+                <div class="image">
+                    <span class="d-flex align-items-center justify-content-center rounded-circle bg-secondary"
+                          style="width:34px;height:34px;">
+                        <i class="fas fa-user text-white" style="font-size:0.85rem;"></i>
+                    </span>
+                </div>
+                <div class="info">
+                    <a href="#" class="d-block">FAST Ecosystem</a>
+                </div>
+            </div>
+
+            <nav class="mt-2">
+                @if (UiContext.IsTreeViewVisible && UiContext.TreeRoot is not null)
+                {
+                    <ul class="fast-tree nav-pills nav-sidebar flex-column">
+                        <WasmTreeViewRenderer Node="UiContext.TreeRoot" OnNodeClick="HandleTreeNodeClick" />
+                    </ul>
+                }
+                else
+                {
+                    <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview"
+                        role="menu" data-accordion="false">
+                        <li class="nav-item">
+                            <a href="/" class="nav-link">
+                                <i class="nav-icon fas fa-tachometer-alt"></i>
+                                <p>Dashboard</p>
+                            </a>
+                        </li>
+                        <li class="nav-header">FAST ECOSYSTEM</li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link">
+                                <i class="nav-icon fas fa-puzzle-piece"></i>
+                                <p>Applets <i class="fas fa-angle-left right"></i></p>
+                            </a>
+                            <ul class="nav nav-treeview">
+                                <li class="nav-item">
+                                    <a href="#" class="nav-link">
+                                        <i class="far fa-circle nav-icon text-muted"></i>
+                                        <p class="text-muted">No applets loaded</p>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                }
+            </nav>
+        </div>
+    </aside>
+
+    @* ═══ MAIN CONTENT ═══════════════════════════════════════════ *@
+    <div class="content-wrapper">
+        <div class="content">
+            <div class="container-fluid pt-3">
+                @Body
+            </div>
+        </div>
     </div>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+    @* ═══ FOOTER ══════════════════════════════════════════════════ *@
+    <footer class="main-footer">
+        <strong>FAST.Matrix</strong> &mdash; Enterprise Micro-Frontend Shell.
+        <div class="float-right d-none d-sm-inline-block">
+            <b>Phase 3</b>
         </div>
+    </footer>
 
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
+    @* ═══ OVERLAY ═════════════════════════════════════════════════ *@
+    <WasmOverlayContainer />
+
 </div>
 
-<div id="blazor-error-ui">
-    An unhandled error has occurred.
-    <a href="" class="reload">Reload</a>
-    <a class="dismiss">🗙</a>
-</div>
+@code {
+    protected override void OnInitialized()
+    {
+        UiContext.OnStateChanged            += HandleStateChanged;
+        AppletContext.OnActiveAppletChanged += HandleStateChanged;
+    }
+
+    private void HandleStateChanged() => InvokeAsync(StateHasChanged);
+
+    private async Task HandleTreeNodeClick(TreeViewNode node)
+    {
+        if (UiContext is WasmShellUiContext concrete)
+            concrete.RaiseNodeSelected(node);
+        await Task.CompletedTask;
+    }
+
+    private async Task HandleNavigationAsync(LocationChangingContext context)
+    {
+        if (AppletContext.ConsumeBypassFlag()) return;
+        if (AppletContext.ActiveApplet is null) return;
+
+        bool isDirty = await AppletContext.HasActiveAppletUnsavedChangesAsync();
+        if (!isDirty) return;
+
+        context.PreventNavigation();
+
+        bool confirmed = false;
+        try
+        {
+            confirmed = await JS.InvokeAsync<bool>("FastMatrix.confirmNavigation",
+                "You have unsaved changes. If you leave now, your changes will be lost. Continue?");
+        }
+        catch { return; }
+
+        if (!confirmed) return;
+
+        AppletContext.ForceBypassGuardOnce();
+    }
+
+    public void Dispose()
+    {
+        UiContext.OnStateChanged            -= HandleStateChanged;
+        AppletContext.OnActiveAppletChanged -= HandleStateChanged;
+    }
+}

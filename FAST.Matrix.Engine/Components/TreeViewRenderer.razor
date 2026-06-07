@@ -1,0 +1,53 @@
+@using FAST.Matrix.Contracts.UI
+@namespace FAST.Matrix.Engine.Components
+
+@* Renders a single TreeViewNode and its children recursively.
+   Clicking a node fires OnNodeClick — never triggers URL navigation. *@
+
+<li class="fast-tree-node">
+    <a class="fast-tree-link @(Node.IsSelected ? "active" : "") @(Node.IsExpanded ? "expanded" : "")"
+       @onclick="HandleClick"
+       @onclick:preventDefault="true"
+       @onclick:stopPropagation="true">
+
+        <i class="fast-tree-icon @Node.IconClass"></i>
+        <span class="fast-tree-label">@Node.Text</span>
+
+        @if (Node.Children.Count > 0)
+        {
+            <i class="fas fa-angle-right fast-tree-toggle"></i>
+        }
+    </a>
+
+    @if (Node.Children.Count > 0 && Node.IsExpanded)
+    {
+        <ul class="fast-tree-children">
+            @foreach (var child in Node.Children)
+            {
+                <TreeViewRenderer Node="child" OnNodeClick="OnNodeClick" />
+            }
+        </ul>
+    }
+</li>
+
+@code {
+    [Parameter, EditorRequired]
+    public TreeViewNode Node { get; set; } = default!;
+
+    /// <summary>
+    /// Bubbles up through the recursive tree to the MainLayout,
+    /// which routes it to ShellUiContext.RaiseNodeSelected().
+    /// Never triggers NavigationManager — URL stays unchanged.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public EventCallback<TreeViewNode> OnNodeClick { get; set; }
+
+    private async Task HandleClick()
+    {
+        // Toggle expansion if the node has children
+        if (Node.Children.Count > 0)
+            Node.IsExpanded = !Node.IsExpanded;
+
+        await OnNodeClick.InvokeAsync(Node);
+    }
+}
