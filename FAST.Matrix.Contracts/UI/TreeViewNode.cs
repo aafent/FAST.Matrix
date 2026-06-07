@@ -42,7 +42,7 @@ public sealed class TreeViewNode
     /// Whether this node is currently selected (active state).
     /// Managed by the Shell's TreeViewRenderer — do not set manually.
     /// </summary>
-    public bool IsSelected { get; internal set; }
+    public bool IsSelected { get; set; }
 
     /// <summary>Child nodes. Empty list means the node is a leaf.</summary>
     public List<TreeViewNode> Children { get; set; } = new();

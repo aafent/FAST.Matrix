@@ -1,9 +1,22 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk.Razor">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>FAST.Matrix.Engine</RootNamespace>
+    <AssemblyName>FAST.Matrix.Engine</AssemblyName>
+    <Description>FAST.Matrix core engine — orchestration, DI sandbox, discovery, layout management.</Description>
+    <Version>1.0.0</Version>
   </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FAST.Matrix.Contracts\FAST.Matrix.Contracts.csproj" />
+  </ItemGroup>
 
 </Project>
