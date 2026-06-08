@@ -1,8 +1,10 @@
 @inherits LayoutComponentBase
 @using FAST.Matrix.Contracts.UI
 @using FAST.Matrix.Host.Server.Client.Services
+@using FAST.Matrix.Host.Server.Client.Activation
 @inject IShellUiContext UiContext
 @inject IShellAppletContext AppletContext
+@inject AppletActivationService ActivationService
 @inject NavigationManager NavManager
 @inject IJSRuntime JS
 @implements IDisposable
@@ -92,9 +94,9 @@
                             </a>
                             <ul class="nav nav-treeview">
                                 <li class="nav-item">
-                                    <a href="#" class="nav-link">
-                                        <i class="far fa-circle nav-icon text-muted"></i>
-                                        <p class="text-muted">No applets loaded</p>
+                                    <a href="/sample" class="nav-link">
+                                        <i class="far fa-dot-circle nav-icon text-primary"></i>
+                                        <p>Sample Applet</p>
                                     </a>
                                 </li>
                             </ul>
@@ -122,7 +124,6 @@
         </div>
     </footer>
 
-    @* ═══ OVERLAY ═════════════════════════════════════════════════ *@
     <WasmOverlayContainer />
 
 </div>
@@ -132,15 +133,25 @@
     {
         UiContext.OnStateChanged            += HandleStateChanged;
         AppletContext.OnActiveAppletChanged += HandleStateChanged;
+        NavManager.LocationChanged          += HandleLocationChanged;
+
+        // Activate for the current URL on first render
+        ActivationService.ActivateForRoute(new Uri(NavManager.Uri).AbsolutePath);
+    }
+
+    private void HandleLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        var path = new Uri(e.Location).AbsolutePath;
+        if (ActivationService.ActivateForRoute(path))
+            InvokeAsync(StateHasChanged);
     }
 
     private void HandleStateChanged() => InvokeAsync(StateHasChanged);
 
-    private async Task HandleTreeNodeClick(TreeViewNode node)
+    private void HandleTreeNodeClick(TreeViewNode node)
     {
         if (UiContext is WasmShellUiContext concrete)
             concrete.RaiseNodeSelected(node);
-        await Task.CompletedTask;
     }
 
     private async Task HandleNavigationAsync(LocationChangingContext context)
@@ -164,11 +175,13 @@
         if (!confirmed) return;
 
         AppletContext.ForceBypassGuardOnce();
+        NavManager.NavigateTo(context.TargetLocation);
     }
 
     public void Dispose()
     {
         UiContext.OnStateChanged            -= HandleStateChanged;
         AppletContext.OnActiveAppletChanged -= HandleStateChanged;
+        NavManager.LocationChanged          -= HandleLocationChanged;
     }
 }

@@ -4,15 +4,21 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>FAST.SampleApplet</RootNamespace>
+    <AssemblyName>FAST.SampleApplet</AssemblyName>
+    <Version>1.0.0</Version>
+    <AssemblyInformationalVersion>1.0.0</AssemblyInformationalVersion>
+    <Description>FAST.Matrix Sample Applet — reference implementation for applet developers.</Description>
   </PropertyGroup>
-
-
-  <ItemGroup>
-    <SupportedPlatform Include="browser" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.27" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FAST.Matrix.Contracts\FAST.Matrix.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

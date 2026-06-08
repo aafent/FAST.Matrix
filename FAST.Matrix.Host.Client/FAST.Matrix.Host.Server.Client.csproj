@@ -15,6 +15,7 @@
   <ItemGroup>
     <!-- Contracts only — WASM-compatible. Engine (server-side) is NOT referenced here. -->
     <ProjectReference Include="..\FAST.Matrix.Contracts\FAST.Matrix.Contracts.csproj" />
+    <ProjectReference Include="..\FAST.SampleApplet\FAST.SampleApplet.csproj" />
   </ItemGroup>
 
 </Project>

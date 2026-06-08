@@ -39,6 +39,9 @@ public static class MatrixServiceExtensions
         configuration.GetSection($"{AssemblyDiscoveryOptions.SectionKey}:Manifest").Bind(options.Manifest);
         configure?.Invoke(options);
 
+        // ── AppletNodeBus ─────────────────────────────────────────────────────
+        services.AddScoped<AppletNodeBus>();
+
         // ── UI Context Services (Scoped on Server, Singleton on WASM) ─────────
         // We register as Scoped here for the Server host.
         // The WASM client project (FAST.Matrix.Host.Client) registers as Singleton in its own Program.cs.

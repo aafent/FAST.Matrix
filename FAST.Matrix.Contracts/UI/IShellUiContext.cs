@@ -26,14 +26,11 @@ public interface IShellUiContext
 
     /// <summary>
     /// Activates the contextual left sidebar tree view.
-    /// Replaces standard navigation links for the duration of the applet's lifetime.
     /// </summary>
     /// <param name="rootNode">Root of the hierarchy to render.</param>
     /// <param name="onNodeSelected">
-    /// Callback invoked when the user clicks a tree node.
-    /// CRITICAL: This callback must NOT call NavigationManager.NavigateTo().
-    /// It must only mutate the applet's internal state, triggering StateHasChanged()
-    /// on the active viewport component. URL must not change.
+    /// Async callback invoked when the user clicks a tree node.
+    /// Must NOT call NavigationManager.NavigateTo(). URL must not change.
     /// </param>
     void SetCustomTree(TreeViewNode rootNode, Action<TreeViewNode> onNodeSelected);
 

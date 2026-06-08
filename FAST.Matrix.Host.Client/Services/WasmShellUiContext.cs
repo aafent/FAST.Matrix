@@ -3,11 +3,6 @@ using FAST.Matrix.Contracts.UI;
 
 namespace FAST.Matrix.Host.Server.Client.Services;
 
-/// <summary>
-/// WASM-side implementation of <see cref="IShellUiContext"/>.
-/// Mirrors <c>ShellUiContext</c> in the Engine but carries no server-side dependencies.
-/// Registered as Singleton in the WASM client's DI container.
-/// </summary>
 internal sealed class WasmShellUiContext : IShellUiContext
 {
     public bool IsTreeViewVisible { get; private set; }
@@ -19,16 +14,16 @@ internal sealed class WasmShellUiContext : IShellUiContext
 
     public void SetCustomTree(TreeViewNode rootNode, Action<TreeViewNode> onNodeSelected)
     {
-        IsTreeViewVisible    = true;
-        TreeRoot             = rootNode;
+        IsTreeViewVisible = true;
+        TreeRoot = rootNode;
         _onNodeSelectedHandler = onNodeSelected;
         OnStateChanged?.Invoke();
     }
 
     public void ClearCustomTree()
     {
-        IsTreeViewVisible    = false;
-        TreeRoot             = null;
+        IsTreeViewVisible = false;
+        TreeRoot = null;
         _onNodeSelectedHandler = null;
         OnStateChanged?.Invoke();
     }
@@ -36,7 +31,6 @@ internal sealed class WasmShellUiContext : IShellUiContext
     public void SetTopToolbar(RenderFragment? toolbarTemplate)
     {
         TopToolbar = toolbarTemplate;
-        OnStateChanged?.Invoke();
     }
 
     public void ClearTopToolbar()
@@ -50,6 +44,7 @@ internal sealed class WasmShellUiContext : IShellUiContext
         if (TreeRoot is not null) ClearSelection(TreeRoot);
         node.IsSelected = true;
         _onNodeSelectedHandler?.Invoke(node);
+        OnStateChanged?.Invoke();
     }
 
     private static void ClearSelection(TreeViewNode node)

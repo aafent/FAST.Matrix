@@ -9,6 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\FAST.Matrix.Host.Client\FAST.Matrix.Host.Server.Client.csproj" />
     <ProjectReference Include="..\FAST.Matrix.Engine\FAST.Matrix.Engine.csproj" />
+    <ProjectReference Include="..\FAST.SampleApplet\FAST.SampleApplet.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.27" />
   </ItemGroup>
 

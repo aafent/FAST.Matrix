@@ -27,12 +27,12 @@
 
 @code {
     [Parameter, EditorRequired] public TreeViewNode Node { get; set; } = default!;
-    [Parameter, EditorRequired] public EventCallback<TreeViewNode> OnNodeClick { get; set; }
+    [Parameter, EditorRequired] public Action<TreeViewNode> OnNodeClick { get; set; } = default!;
 
-    private async Task HandleClick()
+    private void HandleClick()
     {
         if (Node.Children.Count > 0)
             Node.IsExpanded = !Node.IsExpanded;
-        await OnNodeClick.InvokeAsync(Node);
+        OnNodeClick(Node);
     }
 }
