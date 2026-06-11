@@ -37,12 +37,11 @@ builder.Services.AddSingleton<AppletActivationService>(sp =>
 
     var applet  = sp.GetRequiredService<FAST.SampleApplet.Applet.SampleApplet>();
 
-    svc.RegisterApplet(
+    svc.RegisterApplet<FAST.SampleApplet.Applet.SampleApplet>(
         routePrefix: "/sample",
+        applet:      applet,
         activate:    () =>
         {
-            // Applet was already constructed with tree/toolbar set up.
-            // Re-apply in case of deactivation/reactivation.
             applet.Activate();
             sp.GetRequiredService<IShellAppletContext>().SetActiveApplet(applet);
         },
@@ -51,6 +50,8 @@ builder.Services.AddSingleton<AppletActivationService>(sp =>
 
     return svc;
 });
+builder.Services.AddSingleton<FAST.Matrix.Contracts.Applets.IAppletActivationService>(
+    sp => sp.GetRequiredService<AppletActivationService>());
 
 var host = builder.Build();
 

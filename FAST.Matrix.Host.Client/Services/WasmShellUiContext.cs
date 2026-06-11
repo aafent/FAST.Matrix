@@ -5,18 +5,22 @@ namespace FAST.Matrix.Host.Server.Client.Services;
 
 internal sealed class WasmShellUiContext : IShellUiContext
 {
+    public WasmShellUiContext()
+    {
+        Console.WriteLine($"[WSUC] Constructor — instance={GetHashCode()}");
+    }
     public bool IsTreeViewVisible { get; private set; }
     public TreeViewNode? TreeRoot { get; private set; }
+    public TreeViewNode? SelectedNode { get; private set; }
     public RenderFragment? TopToolbar { get; private set; }
     public event Action? OnStateChanged;
 
-    private Action<TreeViewNode>? _onNodeSelectedHandler;
-
-    public void SetCustomTree(TreeViewNode rootNode, Action<TreeViewNode> onNodeSelected)
+    public void SetCustomTree(TreeViewNode rootNode)
     {
+        Console.WriteLine($"[WSUC] SetCustomTree — instance={GetHashCode()} root={rootNode?.Text}");
         IsTreeViewVisible = true;
         TreeRoot = rootNode;
-        _onNodeSelectedHandler = onNodeSelected;
+        SelectedNode = null;
         OnStateChanged?.Invoke();
     }
 
@@ -24,13 +28,14 @@ internal sealed class WasmShellUiContext : IShellUiContext
     {
         IsTreeViewVisible = false;
         TreeRoot = null;
-        _onNodeSelectedHandler = null;
+        SelectedNode = null;
         OnStateChanged?.Invoke();
     }
 
     public void SetTopToolbar(RenderFragment? toolbarTemplate)
     {
         TopToolbar = toolbarTemplate;
+        OnStateChanged?.Invoke();
     }
 
     public void ClearTopToolbar()
@@ -41,9 +46,10 @@ internal sealed class WasmShellUiContext : IShellUiContext
 
     internal void RaiseNodeSelected(TreeViewNode node)
     {
+        Console.WriteLine($"[WSUC] RaiseNodeSelected — instance={GetHashCode()} node={node?.Text}");
         if (TreeRoot is not null) ClearSelection(TreeRoot);
         node.IsSelected = true;
-        _onNodeSelectedHandler?.Invoke(node);
+        SelectedNode = node;
         OnStateChanged?.Invoke();
     }
 

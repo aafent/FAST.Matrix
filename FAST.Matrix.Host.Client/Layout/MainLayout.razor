@@ -111,7 +111,9 @@
     <div class="content-wrapper">
         <div class="content">
             <div class="container-fluid pt-3">
-                @Body
+                <CascadingValue Value="UiContext" IsFixed="false">
+                    @Body
+                </CascadingValue>
             </div>
         </div>
     </div>
@@ -135,13 +137,38 @@
         AppletContext.OnActiveAppletChanged += HandleStateChanged;
         NavManager.LocationChanged          += HandleLocationChanged;
 
-        // Activate for the current URL on first render
+        // Activate for current URL synchronously — tree is set before first render completes
         ActivationService.ActivateForRoute(new Uri(NavManager.Uri).AbsolutePath);
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            Console.WriteLine($"[ML] OnAfterRender(firstRender) — path={new Uri(NavManager.Uri).AbsolutePath} UiContext={UiContext?.GetHashCode()}");
+            // Force re-activation on WASM side — OnInitialized ran on server,
+            // but WasmShellUiContext needs activation on the WASM instance.
+            ActivationService.ForceActivateForRoute(new Uri(NavManager.Uri).AbsolutePath);
+            StateHasChanged();
+        }
     }
 
     private void HandleLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
     {
         var path = new Uri(e.Location).AbsolutePath;
+        Console.WriteLine($"[ML] HandleLocationChanged — path={path} IsNavigationIntercepted={e.IsNavigationIntercepted} UiContext={UiContext?.GetHashCode()}");
+
+        // When WASM takes over from SSR it fires LocationChanged for the current URL
+        // with IsNavigationIntercepted = false. Use this as a reliable signal to
+        // force re-activation on the WASM-side IShellUiContext singleton.
+        if (!e.IsNavigationIntercepted)
+        {
+            Console.WriteLine($"[ML] WASM takeover detected — calling ForceActivateForRoute");
+            ActivationService.ForceActivateForRoute(path);
+            InvokeAsync(StateHasChanged);
+            return;
+        }
+
         if (ActivationService.ActivateForRoute(path))
             InvokeAsync(StateHasChanged);
     }

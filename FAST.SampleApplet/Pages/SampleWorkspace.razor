@@ -3,29 +3,33 @@
 @using FAST.Matrix.Contracts.UI
 @using FAST.Matrix.Contracts.Overlay
 @using FAST.SampleApplet.Applet
-@using FAST.SampleApplet.Models
-@inject SampleApplet Applet
-@inject IShellUiContext ShellUi
+@using FAST.Matrix.Contracts.Applets
 @inject IShellAppletContext AppletContext
 @inject IFastOverlayOrchestrator Overlay
 @implements IDisposable
 
-<PageTitle>Sample Applet — @(Applet.CurrentNode?.Text ?? "No Selection")</PageTitle>
+@{
+    // ShellUi comes as CascadingParameter from MainLayout — always the correct WASM instance.
+    // SelectedNode is set by the Shell when user clicks a tree node.
+    var node = ShellUi?.SelectedNode;
+}
+
+<PageTitle>Sample Applet — @(node?.Text ?? "No Selection")</PageTitle>
 
 <div class="row">
     <div class="col-12">
         <div class="card card-outline card-primary">
             <div class="card-header">
                 <h3 class="card-title">
-                    <i class="@(Applet.CurrentNode?.IconClass ?? "fas fa-circle") mr-2"></i>
-                    @if (Applet.CurrentNode is null)
+                    <i class="@(node?.IconClass ?? "fas fa-circle") mr-2"></i>
+                    @if (node is null)
                     {
                         <span class="text-muted">Select a node from the sidebar tree</span>
                     }
                     else
                     {
-                        @Applet.CurrentNode.Text
-                        <span class="badge badge-secondary ml-2">@Applet.CurrentNode.NodeType</span>
+                        @node.Text
+                        <span class="badge badge-secondary ml-2">@node.NodeType</span>
                     }
                 </h3>
                 @if (_isDirty)
@@ -38,7 +42,7 @@
                 }
             </div>
 
-            @if (Applet.CurrentNode?.NodeType == "Office")
+            @if (node?.NodeType == "Office")
             {
                 <div class="card-body">
                     <div class="form-group">
@@ -74,7 +78,7 @@
                     </div>
                 </div>
             }
-            else if (Applet.CurrentNode is not null)
+            else if (node is not null)
             {
                 <div class="card-body text-muted">
                     <i class="fas fa-info-circle mr-1"></i>
@@ -84,7 +88,7 @@
             else
             {
                 <div class="card-body">
-                    <div class="fast-loading" style="min-height:120px;">
+                    <div style="min-height:120px;display:flex;align-items:center;justify-content:center;flex-direction:column;">
                         <i class="fas fa-mouse-pointer fa-2x text-muted"></i>
                         <p class="text-muted mt-2">Click any node in the sidebar to begin.</p>
                     </div>
@@ -116,6 +120,14 @@
 @code {
     [Parameter] public string? NodeId { get; set; }
 
+    /// <summary>
+    /// Cascaded from MainLayout — always the correct WASM IShellUiContext singleton.
+    /// When MainLayout re-renders after a node click, OnParametersSet fires here
+    /// and we read the new SelectedNode directly. Zero subscriptions needed.
+    /// </summary>
+    [CascadingParameter]
+    public IShellUiContext? ShellUi { get; set; }
+
     private string _previousNodeId = string.Empty;
     private bool   _isDirty;
     private string _officeName = string.Empty;
@@ -125,21 +137,31 @@
 
     protected override void OnInitialized()
     {
-        // Applet is already active (activated by AppletActivationService via router).
-        // Just register ourselves as the active applet context.
-        AppletContext.SetActiveApplet(Applet);
-
-        // Subscribe to shell state changes to update form when a node is selected.
-        ShellUi.OnStateChanged += HandleShellStateChanged;
+        Console.WriteLine($"[SW] OnInitialized — Current={AppletActivationServiceLocator.Current?.GetHashCode().ToString() ?? "NULL"}");
+        var applet = AppletActivationServiceLocator.Current?.GetApplet<SampleApplet>();
+        Console.WriteLine($"[SW] OnInitialized — applet={applet?.GetHashCode().ToString() ?? "NULL"}");
+        if (applet is not null)
+            AppletContext.SetActiveApplet(applet);
     }
 
-    private void HandleShellStateChanged()
+    protected override void OnAfterRender(bool firstRender)
     {
-        var node   = Applet.CurrentNode;
+        if (!firstRender) return;
+        Console.WriteLine($"[SW] OnAfterRender(firstRender) — Current={AppletActivationServiceLocator.Current?.GetHashCode().ToString() ?? "NULL"}");
+        // OnInitialized ran on server-side (Current was null). Re-set on WASM side.
+        var applet = AppletActivationServiceLocator.Current?.GetApplet<SampleApplet>();
+        Console.WriteLine($"[SW] OnAfterRender(firstRender) — applet={applet?.GetHashCode().ToString() ?? "NULL"}");
+        if (applet is not null)
+            AppletContext.SetActiveApplet(applet);
+    }
+
+    protected override void OnParametersSet()
+    {
+        var node   = ShellUi?.SelectedNode;
         var nodeId = node?.Id ?? string.Empty;
+        Console.WriteLine($"[SW] OnParametersSet — ShellUi={ShellUi?.GetHashCode().ToString() ?? "NULL"} SelectedNode={nodeId} prev={_previousNodeId}");
 
         if (nodeId == _previousNodeId) return;
-
         _previousNodeId = nodeId;
 
         if (node?.NodeType == "Office")
@@ -148,24 +170,22 @@
             _address    = node.Metadata.GetValueOrDefault("address", string.Empty);
             _notes      = string.Empty;
             _isDirty    = false;
-            Applet.MarkClean();
+            AppletActivationServiceLocator.Current?.GetApplet<SampleApplet>()?.MarkClean();
         }
         else
         {
             _officeName = _address = _notes = string.Empty;
             _isDirty    = false;
         }
-
-        InvokeAsync(StateHasChanged);
     }
 
-    private void SetDirty() { _isDirty = true; Applet.MarkDirty(); }
+    private void SetDirty() { _isDirty = true; AppletActivationServiceLocator.Current?.GetApplet<SampleApplet>()?.MarkDirty(); }
 
     private async Task SaveAsync()
     {
         await Task.Delay(150);
         _isDirty = false;
-        Applet.MarkClean();
+        AppletActivationServiceLocator.Current?.GetApplet<SampleApplet>()?.MarkClean();
         StateHasChanged();
     }
 
@@ -185,8 +205,6 @@
 
     public void Dispose()
     {
-        ShellUi.OnStateChanged -= HandleShellStateChanged;
-        // Note: AppletContext.ClearActiveApplet() is handled by AppletActivationService.Deactivate
-        // on navigation — NOT here. Disposing before navigation would prevent the unsaved changes guard.
+        AppletContext.ClearActiveApplet();
     }
 }

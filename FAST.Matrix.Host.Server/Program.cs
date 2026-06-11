@@ -1,7 +1,11 @@
 using FAST.Matrix.Host.Server.Components;
 using FAST.Matrix.Engine.Extensions;
+using FAST.Matrix.Contracts.Applets;
+using FAST.Matrix.Engine.Activation;
+using FAST.Matrix.Host.Server.Client.Activation;
 using FAST.SampleApplet.Applet;
 using FAST.SampleApplet.Pages;
+using FAST.SampleApplet.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,16 +20,36 @@ builder.Services.AddFastMatrix(builder.Configuration, options =>
     options.Discovery.AppletsFolder = Path.Combine(AppContext.BaseDirectory, "Applets");
 });
 
-// ── SampleApplet — server-side stub for SSR prerender ─────────────────────────
-// The real instance (with tree/toolbar) lives in the WASM singleton.
-// This stub only satisfies @inject SampleApplet during server-side prerender.
-builder.Services.AddScoped<SampleApplet>(_ => new SampleApplet());
+// ── IAppletActivationService — server returns null for all GetApplet<T>() calls
+builder.Services.AddScoped<IAppletActivationService, NullAppletActivationService>();
 
-// ── AppletActivationService — server-side stub for SSR prerender ──────────────
-builder.Services.AddScoped<FAST.Matrix.Host.Server.Client.Activation.AppletActivationService>(sp =>
-    new FAST.Matrix.Host.Server.Client.Activation.AppletActivationService(
+// ── SampleApplet — full init for SSR prerender (tree visible immediately) ─────
+builder.Services.AddScoped<InMemoryOrganisationService>();
+builder.Services.AddScoped<SampleApplet>(sp =>
+{
+    var uiContext = sp.GetRequiredService<FAST.Matrix.Contracts.UI.IShellUiContext>();
+    var orgSvc    = sp.GetRequiredService<InMemoryOrganisationService>();
+    return new SampleApplet(uiContext, orgSvc);
+});
+
+// ── AppletActivationService — server-side with SampleApplet for SSR routing ───
+builder.Services.AddScoped<AppletActivationService>(sp =>
+{
+    var svc    = new AppletActivationService(
         sp.GetRequiredService<FAST.Matrix.Contracts.UI.IShellUiContext>(),
-        sp.GetRequiredService<FAST.Matrix.Contracts.UI.IShellAppletContext>()));
+        sp.GetRequiredService<FAST.Matrix.Contracts.UI.IShellAppletContext>());
+    var applet = sp.GetRequiredService<SampleApplet>();
+    svc.RegisterApplet<SampleApplet>(
+        routePrefix: "/sample",
+        applet:      applet,
+        activate:    () =>
+        {
+            applet.Activate();
+            sp.GetRequiredService<FAST.Matrix.Contracts.UI.IShellAppletContext>().SetActiveApplet(applet);
+        },
+        deactivate:  () => applet.Deactivate());
+    return svc;
+});
 
 var app = builder.Build();
 

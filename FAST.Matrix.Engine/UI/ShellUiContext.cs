@@ -7,18 +7,16 @@ internal sealed class ShellUiContext : IShellUiContext
 {
     public bool IsTreeViewVisible { get; private set; }
     public TreeViewNode? TreeRoot { get; private set; }
+    public TreeViewNode? SelectedNode { get; private set; }
     public RenderFragment? TopToolbar { get; private set; }
     public event Action? OnStateChanged;
 
-    private Action<TreeViewNode>? _onNodeSelectedHandler;
-
-    public void SetCustomTree(TreeViewNode rootNode, Action<TreeViewNode> onNodeSelected)
+    public void SetCustomTree(TreeViewNode rootNode)
     {
         ArgumentNullException.ThrowIfNull(rootNode);
-        ArgumentNullException.ThrowIfNull(onNodeSelected);
         IsTreeViewVisible = true;
         TreeRoot = rootNode;
-        _onNodeSelectedHandler = onNodeSelected;
+        SelectedNode = null;
         NotifyStateChanged();
     }
 
@@ -26,7 +24,7 @@ internal sealed class ShellUiContext : IShellUiContext
     {
         IsTreeViewVisible = false;
         TreeRoot = null;
-        _onNodeSelectedHandler = null;
+        SelectedNode = null;
         NotifyStateChanged();
     }
 
@@ -47,7 +45,8 @@ internal sealed class ShellUiContext : IShellUiContext
         ArgumentNullException.ThrowIfNull(node);
         if (TreeRoot is not null) ClearSelectionRecursive(TreeRoot);
         node.IsSelected = true;
-        _onNodeSelectedHandler?.Invoke(node);
+        SelectedNode = node;
+        NotifyStateChanged();
     }
 
     private void NotifyStateChanged() => OnStateChanged?.Invoke();
