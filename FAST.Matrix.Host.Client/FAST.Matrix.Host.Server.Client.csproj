@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
@@ -9,11 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.27" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Contracts only — WASM-compatible. Engine (server-side) is NOT referenced here. -->
     <ProjectReference Include="..\FAST.Matrix.Contracts\FAST.Matrix.Contracts.csproj" />
     <ProjectReference Include="..\FAST.SampleApplet\FAST.SampleApplet.csproj" />
   </ItemGroup>

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using FAST.Matrix.Contracts.UI;
 using FAST.Matrix.Contracts.Overlay;
 using FAST.Matrix.Host.Server.Client.Services;
+using FAST.Matrix.Host.Server.Client.Services;
 using FAST.Matrix.Host.Server.Client.Activation;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -24,18 +25,17 @@ builder.Services.AddSingleton<FAST.SampleApplet.Applet.SampleApplet>(sp =>
 {
     var uiContext = sp.GetRequiredService<IShellUiContext>();
     var orgSvc    = sp.GetRequiredService<FAST.SampleApplet.Services.InMemoryOrganisationService>();
-    // Direct constructor — synchronous, no async, no blocking
     return new FAST.SampleApplet.Applet.SampleApplet(uiContext, orgSvc);
 });
 
 // ── Applet Activation Service ─────────────────────────────────────────────────
 builder.Services.AddSingleton<AppletActivationService>(sp =>
 {
-    var svc     = new AppletActivationService(
+    var svc    = new AppletActivationService(
         sp.GetRequiredService<IShellUiContext>(),
         sp.GetRequiredService<IShellAppletContext>());
 
-    var applet  = sp.GetRequiredService<FAST.SampleApplet.Applet.SampleApplet>();
+    var applet = sp.GetRequiredService<FAST.SampleApplet.Applet.SampleApplet>();
 
     svc.RegisterApplet<FAST.SampleApplet.Applet.SampleApplet>(
         routePrefix: "/sample",
@@ -45,11 +45,11 @@ builder.Services.AddSingleton<AppletActivationService>(sp =>
             applet.Activate();
             sp.GetRequiredService<IShellAppletContext>().SetActiveApplet(applet);
         },
-        deactivate:  () => applet.Deactivate()
-    );
+        deactivate:  () => applet.Deactivate());
 
     return svc;
 });
+
 builder.Services.AddSingleton<FAST.Matrix.Contracts.Applets.IAppletActivationService>(
     sp => sp.GetRequiredService<AppletActivationService>());
 

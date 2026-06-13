@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FAST.Matrix.Engine", "FAST.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FAST.Matrix.Host.Server", "FAST.Matrix.Host.Server\FAST.Matrix.Host.Server.csproj", "{634AEEB1-BD3C-49B4-8566-013927D56904}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FAST.Matrix.Host.Server.Client", "FAST.Matrix.Host.Client\FAST.Matrix.Host.Server.Client.csproj", "{58FF6E36-AF6B-41B2-9F47-4ECD8BF51B4E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FAST.Matrix.Host.Client", "FAST.Matrix.Host.Client\FAST.Matrix.Host.Server.Client.csproj", "{58FF6E36-AF6B-41B2-9F47-4ECD8BF51B4E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FAST.SampleApplet", "FAST.SampleApplet\FAST.SampleApplet.csproj", "{F8B165B2-1C7C-4D8F-BF89-0AB619DC1917}"
 EndProject

@@ -3,8 +3,13 @@ using FAST.Matrix.Contracts.UI;
 
 namespace FAST.Matrix.Engine.UI;
 
-internal sealed class ShellUiContext : IShellUiContext
+public sealed class ShellUiContext : IShellUiContext, IShellUiContextInternal
 {
+    public ShellUiContext()
+    {
+        Console.WriteLine($"[WSUC] Constructor — instance={GetHashCode()}");
+    }
+
     public bool IsTreeViewVisible { get; private set; }
     public TreeViewNode? TreeRoot { get; private set; }
     public TreeViewNode? SelectedNode { get; private set; }
@@ -13,6 +18,7 @@ internal sealed class ShellUiContext : IShellUiContext
 
     public void SetCustomTree(TreeViewNode rootNode)
     {
+        Console.WriteLine($"[WSUC] SetCustomTree — instance={GetHashCode()} root={rootNode?.Text}");
         ArgumentNullException.ThrowIfNull(rootNode);
         IsTreeViewVisible = true;
         TreeRoot = rootNode;
@@ -40,8 +46,9 @@ internal sealed class ShellUiContext : IShellUiContext
         NotifyStateChanged();
     }
 
-    internal void RaiseNodeSelected(TreeViewNode node)
+    void IShellUiContextInternal.RaiseNodeSelected(TreeViewNode node)
     {
+        Console.WriteLine($"[WSUC] RaiseNodeSelected — instance={GetHashCode()} node={node?.Text}");
         ArgumentNullException.ThrowIfNull(node);
         if (TreeRoot is not null) ClearSelectionRecursive(TreeRoot);
         node.IsSelected = true;

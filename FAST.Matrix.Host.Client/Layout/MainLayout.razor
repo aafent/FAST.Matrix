@@ -147,7 +147,7 @@
         {
             Console.WriteLine($"[ML] OnAfterRender(firstRender) — path={new Uri(NavManager.Uri).AbsolutePath} UiContext={UiContext?.GetHashCode()}");
             // Force re-activation on WASM side — OnInitialized ran on server,
-            // but WasmShellUiContext needs activation on the WASM instance.
+            // but ShellUiContext needs activation on the WASM singleton instance.
             ActivationService.ForceActivateForRoute(new Uri(NavManager.Uri).AbsolutePath);
             StateHasChanged();
         }
