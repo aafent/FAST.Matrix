@@ -1,27 +1,21 @@
 using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.DependencyInjection;
 using FAST.Matrix.Contracts.Applets;
-using FAST.Matrix.Contracts.Attributes;
 using FAST.Matrix.Contracts.UI;
 using FAST.SampleApplet.Services;
 
 namespace FAST.SampleApplet.Applet;
 
-[AppletService(typeof(IOrganisationService), typeof(InMemoryOrganisationService))]
 public sealed class SampleApplet : IApplet
 {
     public string AppletId  => "fast.sample.applet";
     public string Name      => "Sample Applet";
     public string BaseRoute => "/sample";
 
-    private IShellUiContext? _ui;
+    private readonly IShellUiContext _ui;
+    private readonly TreeViewNode    _tree;
     private bool _hasUnsavedChanges;
-    private TreeViewNode? _tree;
 
-    // ── Constructors ──────────────────────────────────────────────────────────
-
-    public SampleApplet() { }
-
+    // ── Single constructor — DI handles lifetime on both server and WASM ──────
     public SampleApplet(IShellUiContext uiContext, IOrganisationService orgSvc)
     {
         _ui   = uiContext;
@@ -30,30 +24,22 @@ public sealed class SampleApplet : IApplet
 
     // ── IApplet ───────────────────────────────────────────────────────────────
 
-    public Task OnAppletInitAsync(IServiceProvider appletServices)
+    public void OnActivate()
     {
-        _ui   = appletServices.GetRequiredService<IShellUiContext>();
-        _tree = BuildTree(appletServices.GetRequiredService<IOrganisationService>());
-        return Task.CompletedTask;
-    }
-
-    public Task<bool> HasUnsavedChangesAsync() => Task.FromResult(_hasUnsavedChanges);
-    public void MarkDirty()  => _hasUnsavedChanges = true;
-    public void MarkClean()  => _hasUnsavedChanges = false;
-
-    // ── Activation ────────────────────────────────────────────────────────────
-
-    public void Activate()
-    {
-        if (_ui is null || _tree is null) return;
         _ui.SetCustomTree(_tree);
         _ui.SetTopToolbar(ToolbarFragment);
     }
 
-    public void Deactivate()
+    public void OnDeactivate()
     {
         _hasUnsavedChanges = false;
     }
+
+    public Task<bool> HasUnsavedChangesAsync() => Task.FromResult(_hasUnsavedChanges);
+
+    // ── Shell-internal helpers called by SampleWorkspace ─────────────────────
+    public void MarkDirty() => _hasUnsavedChanges = true;
+    public void MarkClean() => _hasUnsavedChanges = false;
 
     // ── Tree ──────────────────────────────────────────────────────────────────
 

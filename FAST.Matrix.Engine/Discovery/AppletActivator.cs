@@ -6,7 +6,7 @@ namespace FAST.Matrix.Engine.Discovery;
 
 /// <summary>
 /// Activates applet instances after their DI sandboxes are ready.
-/// Handles the full init sequence: instantiate → pass sandbox provider → OnAppletInitAsync.
+/// Handles the full init sequence: instantiate → OnActivate.
 /// Caches live instances by AppletId for the duration of the host lifetime.
 /// </summary>
 internal sealed class AppletActivator
@@ -31,7 +31,7 @@ internal sealed class AppletActivator
 
     /// <summary>
     /// Returns the live, fully initialised applet instance for the given AppletId.
-    /// First call triggers instantiation and <see cref="IApplet.OnAppletInitAsync"/>.
+    /// First call triggers instantiation and <see cref="IApplet.OnActivate"/>.
     /// Subsequent calls return the cached instance.
     /// Thread-safe via async semaphore.
     /// </summary>
@@ -73,7 +73,7 @@ internal sealed class AppletActivator
 
             try
             {
-                await instance.OnAppletInitAsync(appletServiceProvider).ConfigureAwait(false);
+                instance.OnActivate();
             }
             catch (Exception ex)
             {

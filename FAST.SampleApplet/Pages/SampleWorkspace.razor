@@ -5,6 +5,7 @@
 @using FAST.SampleApplet.Applet
 @using FAST.Matrix.Contracts.Applets
 @inject IShellAppletContext AppletContext
+@inject IAppletActivationService ActivationService
 @inject IFastOverlayOrchestrator Overlay
 @implements IDisposable
 
@@ -137,8 +138,8 @@
 
     protected override void OnInitialized()
     {
-        Console.WriteLine($"[SW] OnInitialized — Current={AppletActivationServiceLocator.Current?.GetHashCode().ToString() ?? "NULL"}");
-        var applet = AppletActivationServiceLocator.Current?.GetApplet<SampleApplet>();
+        Console.WriteLine($"[SW] OnInitialized — Current={ActivationService.GetHashCode().ToString()}");
+        var applet = ActivationService.GetApplet<SampleApplet>();
         Console.WriteLine($"[SW] OnInitialized — applet={applet?.GetHashCode().ToString() ?? "NULL"}");
         if (applet is not null)
             AppletContext.SetActiveApplet(applet);
@@ -147,9 +148,9 @@
     protected override void OnAfterRender(bool firstRender)
     {
         if (!firstRender) return;
-        Console.WriteLine($"[SW] OnAfterRender(firstRender) — Current={AppletActivationServiceLocator.Current?.GetHashCode().ToString() ?? "NULL"}");
+        Console.WriteLine($"[SW] OnAfterRender(firstRender) — Current={ActivationService.GetHashCode().ToString()}");
         // OnInitialized ran on server-side (Current was null). Re-set on WASM side.
-        var applet = AppletActivationServiceLocator.Current?.GetApplet<SampleApplet>();
+        var applet = ActivationService.GetApplet<SampleApplet>();
         Console.WriteLine($"[SW] OnAfterRender(firstRender) — applet={applet?.GetHashCode().ToString() ?? "NULL"}");
         if (applet is not null)
             AppletContext.SetActiveApplet(applet);
@@ -170,7 +171,7 @@
             _address    = node.Metadata.GetValueOrDefault("address", string.Empty);
             _notes      = string.Empty;
             _isDirty    = false;
-            AppletActivationServiceLocator.Current?.GetApplet<SampleApplet>()?.MarkClean();
+            ActivationService.GetApplet<SampleApplet>()?.MarkClean();
         }
         else
         {
@@ -179,13 +180,13 @@
         }
     }
 
-    private void SetDirty() { _isDirty = true; AppletActivationServiceLocator.Current?.GetApplet<SampleApplet>()?.MarkDirty(); }
+    private void SetDirty() { _isDirty = true; ActivationService.GetApplet<SampleApplet>()?.MarkDirty(); }
 
     private async Task SaveAsync()
     {
         await Task.Delay(150);
         _isDirty = false;
-        AppletActivationServiceLocator.Current?.GetApplet<SampleApplet>()?.MarkClean();
+        ActivationService.GetApplet<SampleApplet>()?.MarkClean();
         StateHasChanged();
     }
 

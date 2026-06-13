@@ -26,28 +26,19 @@ builder.Services.AddScoped<IAppletActivationService, NullAppletActivationService
 // ── SampleApplet — full init for SSR prerender (tree visible immediately) ─────
 builder.Services.AddScoped<InMemoryOrganisationService>();
 builder.Services.AddScoped<SampleApplet>(sp =>
-{
-    var uiContext = sp.GetRequiredService<FAST.Matrix.Contracts.UI.IShellUiContext>();
-    var orgSvc    = sp.GetRequiredService<InMemoryOrganisationService>();
-    return new SampleApplet(uiContext, orgSvc);
-});
+    new SampleApplet(
+        sp.GetRequiredService<FAST.Matrix.Contracts.UI.IShellUiContext>(),
+        sp.GetRequiredService<InMemoryOrganisationService>()));
 
-// ── AppletActivationService — server-side with SampleApplet for SSR routing ───
+// ── AppletActivationService — server-side for SSR routing ────────────────────
 builder.Services.AddScoped<AppletActivationService>(sp =>
 {
     var svc    = new AppletActivationService(
         sp.GetRequiredService<FAST.Matrix.Contracts.UI.IShellUiContext>(),
         sp.GetRequiredService<FAST.Matrix.Contracts.UI.IShellAppletContext>());
-    var applet = sp.GetRequiredService<SampleApplet>();
-    svc.RegisterApplet<SampleApplet>(
-        routePrefix: "/sample",
-        applet:      applet,
-        activate:    () =>
-        {
-            applet.Activate();
-            sp.GetRequiredService<FAST.Matrix.Contracts.UI.IShellAppletContext>().SetActiveApplet(applet);
-        },
-        deactivate:  () => applet.Deactivate());
+
+    svc.RegisterApplet("/sample", sp.GetRequiredService<SampleApplet>());
+
     return svc;
 });
 
